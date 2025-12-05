@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ma Sói – Web Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #020617;
+      color: #f9fafb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      background: radial-gradient(circle at top, #1f2937, #020617);
+    }
+    .app {
+      width: 100%;
+      max-width: 1000px;
+      padding: 16px;
+    }
+    .card {
+      background: rgba(15,23,42,0.95);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      border: 1px solid rgba(148,163,184,0.4);
+    }
+    h1, h2, h3 { margin: 0 0 8px; }
+    h1 { font-size: 1.6rem; text-align: center; }
+    .hidden { display: none; }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: #e5e7eb;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 0.95rem;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #38bdf8;
+    }
+    button {
+      margin-top: 8px;
+      border: none;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:active { transform: scale(0.98); }
+    button.secondary {
+      background: rgba(15,23,42,0.9);
+      border: 1px solid #4b5563;
+      margin-top: 4px;
+    }
+    .mode-select {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .mode-btn {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: rgba(15,23,42,0.9);
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .mode-btn span:first-child {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .mode-btn span:last-child {
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+    .mode-btn:hover {
+      border-color: #38bdf8;
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+    .row > * { flex: 1; }
+
+    .section-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #9ca3af;
+      margin-top: 12px;
+      margin-bottom: 4px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(148,163,184,0.4);
+      margin-right: 6px;
+      margin-bottom: 4px;
+    }
+    .pill.green { border-color: #22c55e; color: #bbf7d0; }
+    .pill.red   { border-color: #ef4444; color: #fecaca; }
+    .pill.blue  { border-color: #38bdf8; color: #bae6fd; }
+
+    .small {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    ul.player-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    ul.player-list li {
+      padding: 6px 4px;
+      border-bottom: 1px solid rgba(31,41,55,0.8);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      gap: 6px;
+    }
+    .player-status-alive { color: #22c55e; font-size: 0.8rem; }
+    .player-status-dead  { color: #ef4444; font-size: 0.8rem; }
+    .player-status-muted { color: #9ca3af; font-size: 0.8rem; margin-left: 6px; }
+
+    .system-msg {
+      background: rgba(8,47,73,0.8);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.9rem;
+      border: 1px solid #0ea5e9;
+      margin-top: 8px;
+      white-space: pre-line;
+    }
+
+    /* Log host dạng history */
+    #host-last-result {
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+    }
+    #host-last-result div + div {
+      border-top: 1px solid rgba(30,64,175,0.5);
+      margin-top: 4px;
+      padding-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- MODE SCREEN -->
+    <div id="mode-screen" class="card">
+      <h1>🎴 Ma Sói – Web Game</h1>
+      <p class="small">
+        – <b>Host</b> dùng trên PC (quản trò + giọng nói)<br/>
+        – <b>Người chơi</b> dùng trên điện thoại<br/>
+        – <b>Màn hình làng</b> để chiếu danh sách người chơi
+      </p>
+      <div class="mode-select">
+        <button class="mode-btn" data-mode="host">
+          <span>🧑‍💻 Tôi là Host</span>
+          <span>Tạo room, start game, chuyển Đêm/Ngày, gọi vai bằng giọng nói.</span>
+        </button>
+        <button class="mode-btn" data-mode="player">
+          <span>📱 Tôi là Người chơi</span>
+          <span>Nhập room code + tên, thực hiện hành động.</span>
+        </button>
+        <button class="mode-btn" data-mode="village">
+          <span>🖥 Màn hình làng</span>
+          <span>Hiển thị ai sống/chết, phase hiện tại.</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- HOST SCREEN -->
+    <div id="host-screen" class="card hidden">
+      <h1>🧑‍💻 Host – Quản trò</h1>
+      <button class="secondary" onclick="backToMode()">← Quay lại</button>
+
+      <div class="section-title">Phòng & bảo mật</div>
+      <div class="row">
+        <div>
+          <label>Mã phòng</label>
+          <input id="host-room-code" readonly />
+          <p class="small">Gửi mã này cho người chơi.</p>
+        </div>
+        <div>
+          <label>Host secret</label>
+          <input id="host-secret" readonly />
+          <p class="small">GIỮ bí mật này, không đưa cho người chơi.</p>
+        </div>
+      </div>
+      <button onclick="hostCreateRoom()">Tạo phòng mới</button>
+
+      <div class="section-title">Phase hiện tại</div>
+      <div id="host-phase-pill"></div>
+      <p class="small" id="host-nightday-text"></p>
+
+      <div class="section-title">Điều khiển game</div>
+      <div class="row">
+        <button onclick="hostStartGame()">Bắt đầu game (random roles)</button>
+        <button onclick="hostRefresh()">Làm mới trạng thái</button>
+      </div>
+      <div class="row">
+        <button class="secondary" onclick="toggleAutoHost()">Bật / Tắt Auto Host (AI)</button>
+      </div>
+      <p class="small">
+        Auto Host: sau khi game bắt đầu, AI sẽ tự gọi các role (Mage → Werewolf → Seer → Witch → Guard → Gambler),
+        tự xử lý Đêm/Ngày/Vote và tự kết thúc game khi có bên thắng.
+      </p>
+
+      <div class="section-title">Chu kỳ ngày / đêm (manual)</div>
+      <div class="row">
+        <button onclick="hostNightCycle()">🌙 Night – everyone go to sleep</button>
+        <button onclick="hostMorningCycle()">☀ Morning – everyone wake up</button>
+      </div>
+
+      <div class="section-title">Vote treo cổ trong NGÀY</div>
+      <div class="row">
+        <div>
+          <label>Thời gian vote (giây, tùy chọn)</label>
+          <input id="vote-duration" type="number" min="10" placeholder="VD: 60" />
+        </div>
+        <div>
+          <button onclick="hostStartVoting()">Bắt đầu thời gian vote</button>
+          <button class="secondary" onclick="hostVotePreview()">Xem người đang bị vote nhiều nhất</button>
+          <p class="small" id="vote-timer-text"></p>
+        </div>
+      </div>
+
+      <div class="section-title">Gọi role (manual)</div>
+      <div class="row">
+        <button class="secondary" onclick="hostCallRole('mage', 'Mage, wake up and choose someone to silence for tomorrow.')">
+          Call Mage
+        </button>
+        <button class="secondary" onclick="hostCallRole('guard', 'Guard, wake up and choose someone to protect.')">
+          Call Guard
+        </button>
+      </div>
+      <div class="row">
+        <button class="secondary" onclick="hostCallRole('werewolf', 'Werewolves, wake up and choose a victim.')">
+          Call Werewolves
+        </button>
+        <button class="secondary" onclick="hostCallRole('gambler', 'Gambler, wake up and choose a player to bet on.')">
+          Call Gambler
+        </button>
+      </div>
+      <div class="row">
+        <button class="secondary" onclick="hostCallRole('seer', 'Seer, wake up and choose someone to inspect.')">
+          Call Seer
+        </button>
+        <button class="secondary" onclick="hostCallRole('witch', 'Witch, wake up. Here is tonight\\'s victim.')">
+          Call Witch
+        </button>
+      </div>
+
+      <div class="section-title">Giọng host chung</div>
+      <div class="row">
+        <button class="secondary" onclick="speak('Night falls. Everyone, go to sleep.')">
+          Read only: Night falls
+        </button>
+        <button class="secondary" onclick="speak('It is now morning. Everyone, open your eyes.')">
+          Read only: Morning
+        </button>
+      </div>
+
+      <div class="section-title">Danh sách người chơi</div>
+      <ul id="host-player-list" class="player-list"></ul>
+
+      <div class="section-title">Kết quả / log</div>
+      <div id="host-last-result" class="system-msg" style="display:none;"></div>
+    </div>
+
+    <!-- PLAYER SCREEN -->
+    <div id="player-screen" class="card hidden">
+      <h1>📱 Người chơi</h1>
+      <button class="secondary" onclick="backToMode()">← Quay lại</button>
+
+      <div id="player-join">
+        <p class="small">Nhập <b>mã phòng</b> host gửi cho bạn và <b>tên</b> của bạn.</p>
+        <label for="pl-room">Mã phòng</label>
+        <input id="pl-room" placeholder="VD: 1234" />
+        <label for="pl-name" style="margin-top:6px;">Tên của bạn</label>
+        <input id="pl-name" placeholder="VD: Huy" />
+        <button onclick="playerJoin()">Tham gia phòng</button>
+      </div>
+
+      <div id="player-game" class="hidden">
+        <p class="small" id="room-info"></p>
+        <div id="pl-top-info"></div>
+        <div id="pl-system-message" class="system-msg" style="display:none;"></div>
+
+        <div style="margin-top:10px;">
+          <div id="pl-phase-pill"></div>
+          <p class="small" id="pl-night-summary"></p>
+        </div>
+
+        <div style="margin-top:8px;">
+          <strong>Hành động của bạn</strong>
+          <div id="pl-action-area"></div>
+        </div>
+
+        <div style="margin-top:8px;">
+          <strong>Người chơi</strong>
+          <ul id="pl-player-list" class="player-list"></ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- VILLAGE SCREEN -->
+    <div id="village-screen" class="card hidden">
+      <h1>🖥 Màn hình làng</h1>
+      <button class="secondary" onclick="backToMode()">← Quay lại</button>
+      <p class="small">Mở trên PC/TV để cả làng xem ai sống/chết, phase hiện tại.</p>
+
+      <label for="village-room">Mã phòng</label>
+      <input id="village-room" placeholder="VD: 1234" />
+      <button onclick="villageConnect()">Kết nối phòng</button>
+
+      <div id="village-info" class="small" style="margin-top:8px;"></div>
+      <div id="village-phase" style="margin:8px 0;"></div>
+      <ul id="village-player-list" class="player-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://10.236.4.53:8000/api";
+
+    const modeScreen    = document.getElementById("mode-screen");
+    const hostScreen    = document.getElementById("host-screen");
+    const playerScreen  = document.getElementById("player-screen");
+    const villageScreen = document.getElementById("village-screen");
+
+    document.querySelectorAll(".mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.getAttribute("data-mode");
+        modeScreen.classList.add("hidden");
+        hostScreen.classList.add("hidden");
+        playerScreen.classList.add("hidden");
+        villageScreen.classList.add("hidden");
+
+        if (mode === "host")   hostScreen.classList.remove("hidden");
+        if (mode === "player") playerScreen.classList.remove("hidden");
+        if (mode === "village") villageScreen.classList.remove("hidden");
+      });
+    });
+
+    function backToMode() {
+      modeScreen.classList.remove("hidden");
+      hostScreen.classList.add("hidden");
+      playerScreen.classList.add("hidden");
+      villageScreen.classList.add("hidden");
+    }
+
+    // ==== VOICE ====
+    function speak(text) {
+      if (!("speechSynthesis" in window)) return;
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      const voices = window.speechSynthesis.getVoices();
+      const female = voices.find(v =>
+        v.lang.startsWith("en") &&
+        /female|woman|zira|samantha|Google UK English Female/i.test(v.name)
+      );
+      if (female) u.voice = female;
+      window.speechSynthesis.speak(u);
+    }
+
+    // ==== HOST STATE + LOG ====
+    const hostState = {
+      roomCode: null,
+      hostSecret: null,
+      phase: "lobby",
+      nightNumber: 0,
+      dayNumber: 0,
+      players: [],
+      deathsLastNight: [],
+      witchHasHeal: true,
+      witchHasPoison: true,
+      activeCall: null,
+      votingStatus: "idle",
+      voteDurationSec: null,
+      winner: null,
+    };
+
+    const hostRoomCodeInput = document.getElementById("host-room-code");
+    const hostSecretInput   = document.getElementById("host-secret");
+    const hostPhasePill     = document.getElementById("host-phase-pill");
+    const hostNightDayText  = document.getElementById("host-nightday-text");
+    const hostPlayerList    = document.getElementById("host-player-list");
+    const hostLastResult    = document.getElementById("host-last-result");
+
+    let hostLog = [];
+    let lastWaitingMessage = null;
+
+    function addHostLog(message) {
+  // Nếu là thông báo "Waiting for ..." thì không log trùng lặp
+  if (message.startsWith("Waiting for ")) {
+    if (message === lastWaitingMessage) {
+      return; // bỏ qua nếu y chang lần trước
+    }
+    lastWaitingMessage = message;
+  }
+
+  const stamp = new Date().toLocaleTimeString();
+  hostLog.push(`[${stamp}] ${message}`);
+  hostLastResult.style.display = "block";
+  hostLastResult.innerHTML = hostLog
+    .map(line => `<div>${line}</div>`)
+    .join("");
+  hostLastResult.scrollTop = hostLastResult.scrollHeight;
+}
+
+    const voteDurationInput = document.getElementById("vote-duration");
+    const voteTimerText     = document.getElementById("vote-timer-text");
+    let voteTimerId = null;
+    let voteRemaining = null;
+
+    // Auto Host state
+    let autoHostEnabled      = false;
+    let autoHostLoopRunning  = false;
+    let lastNightProcessed   = 0;
+    let lastDayProcessed     = 0;
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function hostCreateRoom() {
+      try {
+        const res = await fetch(`${API_BASE}/rooms`, { method: "POST" });
+        const data = await res.json();
+        hostState.roomCode   = data.room_code;
+        hostState.hostSecret = data.host_secret;
+        hostRoomCodeInput.value = hostState.roomCode;
+        hostSecretInput.value   = hostState.hostSecret;
+        addHostLog(`Created room. Room code: ${hostState.roomCode}. Host secret: ${hostState.hostSecret}.`);
+      } catch (e) {
+        console.error(e);
+        alert("Error creating room.");
+      }
+    }
+
+    async function hostRefresh() {
+      if (!hostState.roomCode || !hostState.hostSecret) return;
+      try {
+        const url = `${API_BASE}/rooms/${hostState.roomCode}/host_state?host_secret=${encodeURIComponent(hostState.hostSecret)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!res.ok) {
+          console.warn("host_state error:", data.detail || res.statusText);
+          return;
+        }
+        hostState.phase           = data.phase;
+        hostState.nightNumber     = data.night_number;
+        hostState.dayNumber       = data.day_number;
+        hostState.players         = data.players;
+        hostState.deathsLastNight = data.deaths_last_night;
+        hostState.witchHasHeal    = data.witch_has_heal;
+        hostState.witchHasPoison  = data.witch_has_poison;
+        hostState.activeCall      = data.active_call;
+        hostState.votingStatus    = data.voting_status;
+        hostState.voteDurationSec = data.vote_duration_sec;
+        hostState.winner          = data.winner || null;
+        renderHostState();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function hostStartGame() {
+      if (!hostState.roomCode || !hostState.hostSecret) {
+        alert("Create room first.");
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/start`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ host_secret: hostState.hostSecret }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert("Start error: " + (data.detail || res.statusText));
+          return;
+        }
+        addHostLog(data.message || "Game started.");
+        await hostRefresh();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function hostNightCycle() {
+      if (!hostState.roomCode || !hostState.hostSecret) {
+        alert("Need room & host secret.");
+        return;
+      }
+      await hostRefresh();
+      if (hostState.winner) {
+        return;
+      }
+      try {
+        if (hostState.phase === "day") {
+          const resDay = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/resolve_day`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ host_secret: hostState.hostSecret }),
+          });
+          const dataDay = await resDay.json();
+          if (!resDay.ok) {
+            alert("Resolve day error: " + (dataDay.detail || resDay.statusText));
+            return;
+          }
+          addHostLog(dataDay.message);
+          if (dataDay.winner === "werewolves") {
+            addHostLog("Werewolves win the game!");
+            speak("The werewolves win the game!");
+            await hostRefresh();
+            return;
+          } else if (dataDay.winner === "village") {
+            addHostLog("The village wins the game!");
+            speak("The village wins the game!");
+            await hostRefresh();
+            return;
+          }
+        }
+
+        const resPhase = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/phase`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ host_secret: hostState.hostSecret, phase: "night" }),
+        });
+        const dataPhase = await resPhase.json();
+        if (!resPhase.ok) {
+          alert("Phase error: " + (dataPhase.detail || resPhase.statusText));
+          return;
+        }
+        addHostLog(`Night ${dataPhase.night_number} starts. Everyone goes to sleep.`);
+        speak("Night falls. Everyone, go to sleep.");
+        await hostRefresh();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function hostMorningCycle() {
+      if (!hostState.roomCode || !hostState.hostSecret) {
+        alert("Need room & host secret.");
+        return;
+      }
+      await hostRefresh();
+      if (hostState.winner) {
+        return;
+      }
+      try {
+        if (hostState.phase === "night") {
+          const resNight = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/resolve_night`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({ host_secret: hostState.hostSecret }),
+          });
+          const dataNight = await resNight.json();
+          if (!resNight.ok) {
+            alert("Resolve night error: " + (dataNight.detail || resNight.statusText));
+            return;
+          }
+
+          if (dataNight.deaths && dataNight.deaths.length > 0) {
+            addHostLog(
+              `Last night deaths: ${dataNight.deaths.join(", ")}. Muted: ${dataNight.muted_for_today.join(", ") || "none"}.`
+            );
+            speak(`Last night, ${dataNight.deaths.join(", ")} died.`);
+          } else {
+            addHostLog(
+              `No one died last night. Muted: ${dataNight.muted_for_today.join(", ") || "none"}.`
+            );
+            speak("No one died last night.");
+          }
+          if (dataNight.winner === "werewolves") {
+            addHostLog("Werewolves win the game!");
+            speak("The werewolves win the game!");
+            await hostRefresh();
+            return;
+          } else if (dataNight.winner === "village") {
+            addHostLog("The village wins the game!");
+            speak("The village wins the game!");
+            await hostRefresh();
+            return;
+          }
+        }
+
+        const resPhase = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/phase`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ host_secret: hostState.hostSecret, phase: "day" }),
+        });
+        const dataPhase = await resPhase.json();
+        if (!resPhase.ok) {
+          alert("Phase error: " + (dataPhase.detail || resPhase.statusText));
+          return;
+        }
+        addHostLog(`Day ${dataPhase.day_number} begins.`);
+        speak("It is now morning. Everyone, open your eyes.");
+        await hostRefresh();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function hostCallRole(role, speakText) {
+      if (!hostState.roomCode || !hostState.hostSecret) {
+        alert("Need room & host secret.");
+        return;
+      }
+      if (hostState.winner) return;
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/call_role`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ host_secret: hostState.hostSecret, role }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert("Call role error: " + (data.detail || res.statusText));
+          return;
+        }
+        hostState.activeCall = data.active_call;
+        addHostLog(`Calling role: ${role || "none"}`);
+        if (speakText) speak(speakText);
+        await hostRefresh();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function hostStartVoting() {
+      if (!hostState.roomCode || !hostState.hostSecret) {
+        alert("Need room & host secret.");
+        return;
+      }
+      if (hostState.winner) return;
+
+      const sec = parseInt(voteDurationInput.value, 10);
+      const duration = (!isNaN(sec) && sec > 0) ? sec : null;
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/start_voting`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            host_secret: hostState.hostSecret,
+            duration_sec: duration,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert("Start voting error: " + (data.detail || res.statusText));
+          return;
+        }
+        hostState.votingStatus = data.voting_status;
+        hostState.voteDurationSec = data.vote_duration_sec;
+
+        if (duration) {
+          voteRemaining = duration;
+          if (voteTimerId) clearInterval(voteTimerId);
+          voteTimerText.textContent = `Voting time: ${voteRemaining}s`;
+          voteTimerId = setInterval(() => {
+            voteRemaining -= 1;
+            if (voteRemaining <= 0) {
+              clearInterval(voteTimerId);
+              voteTimerId = null;
+              voteTimerText.textContent =
+                "Voting time is over. Let the accused defend, then finalize.";
+            } else {
+              voteTimerText.textContent = `Voting time: ${voteRemaining}s`;
+            }
+          }, 1000);
+        } else {
+          voteTimerText.textContent = "Voting started (no time limit).";
+        }
+        addHostLog(`Voting started${duration ? " for " + duration + " seconds" : ""}.`);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function hostVotePreview() {
+      if (!hostState.roomCode || !hostState.hostSecret) {
+        alert("Need room & host secret.");
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/vote_preview`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ host_secret: hostState.hostSecret }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert("Vote preview error: " + (data.detail || res.statusText));
+          return;
+        }
+        const candidate = data.candidate_name;
+        const votes = data.votes || {};
+        const lines = Object.entries(votes).map(([name, c]) => `${name}: ${c}`);
+        if (candidate) {
+          addHostLog(`Current top candidate: ${candidate}\nVotes:\n${lines.join("\n")}`);
+        } else {
+          addHostLog("No votes yet.");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderHostState() {
+      const phaseLabel =
+        hostState.phase === "night" ? `🌙 NIGHT ${hostState.nightNumber}` :
+        hostState.phase === "day"   ? `☀ DAY ${hostState.dayNumber}` :
+        hostState.phase === "ended" ? `🏁 GAME ENDED` :
+        "🏠 LOBBY";
+
+      hostPhasePill.innerHTML = `<span class="pill blue">${phaseLabel}</span>`;
+
+      const winnerText =
+        hostState.winner === "werewolves" ? " | WINNER: Werewolves" :
+        hostState.winner === "village"    ? " | WINNER: Village" : "";
+
+      hostNightDayText.textContent =
+        `Phase: ${hostState.phase}, Night: ${hostState.nightNumber}, Day: ${hostState.dayNumber}, ` +
+        `Active call: ${hostState.activeCall || "none"}, Voting: ${hostState.votingStatus}${winnerText}`;
+
+      hostPlayerList.innerHTML = "";
+      hostState.players.forEach(p => {
+        const muted = p.muted_today ? `<span class="player-status-muted">• muted</span>` : "";
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span>${p.name}</span>
+          <span>
+            ${p.alive ? "🟢" : "☠"} 
+            (${roleToLabel(p.role)}) 
+            ${p.prince_revealed ? "👑" : ""}
+            ${muted}
+          </span>
+        `;
+        hostPlayerList.appendChild(li);
+      });
+    }
+
+    // ==== AUTO HOST ====
+    function toggleAutoHost() {
+      if (!hostState.roomCode || !hostState.hostSecret) {
+        alert("Bạn phải tạo phòng trước.");
+        return;
+      }
+      autoHostEnabled = !autoHostEnabled;
+      if (autoHostEnabled) {
+        addHostLog("Auto Host is ON. AI will control the night/day flow.");
+        if (!autoHostLoopRunning) {
+          autoHostLoop();
+        }
+      } else {
+        addHostLog("Auto Host is OFF.");
+      }
+    }
+
+    async function autoHostLoop() {
+      autoHostLoopRunning = true;
+      while (autoHostEnabled) {
+        await hostRefresh();
+        if (!hostState.roomCode || !hostState.hostSecret) {
+          await delay(1000);
+          continue;
+        }
+        if (hostState.winner) break;
+
+        if (hostState.phase === "night") {
+          await autoNightRound();
+        } else if (hostState.phase === "day") {
+          await autoDayRound();
+        } else {
+          await delay(1000);
+        }
+      }
+      autoHostLoopRunning = false;
+    }
+
+    async function autoNightRound() {
+      if (hostState.nightNumber <= lastNightProcessed) {
+        await delay(1000);
+        return;
+      }
+      lastNightProcessed = hostState.nightNumber;
+
+      speak(`Night ${hostState.nightNumber} begins. Everyone, go to sleep.`);
+      addHostLog(`AutoHost: Night ${hostState.nightNumber} begins.`);
+      await delay(1500);
+      await hostRefresh();
+
+      function hasAliveRole(role) {
+        return hostState.players.some(p => p.alive && p.role === role);
+      }
+
+      if (autoHostEnabled && hasAliveRole("mage")) {
+        await callRoleAndWait(
+          "mage",
+          "Mage, wake up and choose someone to silence.",
+          "Mage, go back to sleep."
+        );
+      }
+      if (autoHostEnabled && hasAliveRole("werewolf")) {
+        await callRoleAndWait(
+          "werewolf",
+          "Werewolves, wake up and choose a victim.",
+          "Werewolves, go back to sleep."
+        );
+      }
+      if (autoHostEnabled && hasAliveRole("seer")) {
+        await callRoleAndWait(
+          "seer",
+          "Seer, wake up and choose someone to inspect.",
+          "Seer, go back to sleep."
+        );
+      }
+      if (autoHostEnabled && hasAliveRole("witch")) {
+        await callRoleAndWait(
+          "witch",
+          "Witch, wake up. Here is tonight's victim.",
+          "Witch, go back to sleep."
+        );
+      }
+      if (autoHostEnabled && hasAliveRole("guard")) {
+        await callRoleAndWait(
+          "guard",
+          "Guard, wake up and choose someone to protect.",
+          "Guard, go back to sleep."
+        );
+      }
+      if (autoHostEnabled && hostState.nightNumber >= 2 && hasAliveRole("gambler")) {
+        await callRoleAndWait(
+          "gambler",
+          "Gambler, wake up. You may bet on someone or do nothing.",
+          "Gambler, go back to sleep."
+        );
+      }
+
+      if (!autoHostEnabled) return;
+      await hostMorningCycle();  // resolve_night + sang day
+    }
+
+    async function callRoleAndWait(role, wakeText, doneText) {
+      if (!autoHostEnabled) return;
+      await hostCallRole(role, wakeText);
+      await delay(800);
+
+      while (autoHostEnabled && !hostState.winner && hostState.phase === "night") {
+        try {
+          const url = `${API_BASE}/rooms/${hostState.roomCode}/role_progress?` +
+                      `host_secret=${encodeURIComponent(hostState.hostSecret)}&role=${encodeURIComponent(role)}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          if (res.ok) {
+            if (data.done) break;
+            addHostLog(`Waiting for ${role} players: ${data.pending.join(", ") || "none"}`);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        await delay(2000);
+      }
+
+      speak(doneText);
+      addHostLog(`Role ${role} finished actions.`);
+      try {
+        await fetch(`${API_BASE}/rooms/${hostState.roomCode}/call_role`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ host_secret: hostState.hostSecret, role: null }),
+        });
+      } catch (e) {
+        console.error(e);
+      }
+      await hostRefresh();
+      await delay(400);
+    }
+
+    async function autoDayRound() {
+      if (hostState.dayNumber <= lastDayProcessed) {
+        await delay(1000);
+        return;
+      }
+      lastDayProcessed = hostState.dayNumber;
+
+      speak(`Day ${hostState.dayNumber} begins. You may now discuss and vote.`);
+      addHostLog(`AutoHost: Day ${hostState.dayNumber} begins.`);
+
+      let sec = parseInt(voteDurationInput.value, 10);
+      if (isNaN(sec) || sec <= 0) sec = 60;
+      voteDurationInput.value = sec.toString();
+
+      await hostStartVoting();
+      await delay(500);
+
+      addHostLog(`Voting started for ${sec} seconds.`);
+      speak(`You have ${sec} seconds to vote.`);
+
+      for (let t = sec; t > 0 && autoHostEnabled; t--) {
+        voteTimerText.textContent = `Voting time remaining: ${t}s`;
+        await delay(1000);
+      }
+      if (!autoHostEnabled) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${hostState.roomCode}/vote_preview`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ host_secret: hostState.hostSecret }),
+        });
+        const data = await res.json();
+        if (res.ok && data.candidate_name) {
+          addHostLog(
+            `Top candidate: ${data.candidate_name}\nVotes: ${JSON.stringify(data.votes)}`
+          );
+          speak(`The top candidate is ${data.candidate_name}. Finalizing the vote.`);
+        } else {
+          addHostLog("No clear candidate from votes.");
+          speak("There is no clear candidate. Finalizing the day.");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      await hostNightCycle();   // resolve_day + sang night
+      await delay(1000);
+    }
+
+    // ==== PLAYER SIDE ====
+    const playerState = {
+      roomCode: null,
+      playerId: null,
+      playerName: null,
+      role: null,
+      alive: true,
+      mutedToday: false,
+      phase: "lobby",
+      nightNumber: 0,
+      dayNumber: 0,
+      deathsLastNight: [],
+      players: [],
+      activeCall: null,
+      wolfMates: [],
+      winner: null,
+    };
+
+    const nightUIState = {
+      built: false,
+      nightNumber: null,
+    };
+    const dayUIState = {
+      built: false,
+      dayNumber: null,
+      votedTarget: null,
+    };
+
+    const roomInfoEl       = document.getElementById("room-info");
+    const plTopInfoEl      = document.getElementById("pl-top-info");
+    const plSystemMsgEl    = document.getElementById("pl-system-message");
+    const plNightSummaryEl = document.getElementById("pl-night-summary");
+    const plActionArea     = document.getElementById("pl-action-area");
+    const plPlayerListEl   = document.getElementById("pl-player-list");
+
+    async function playerJoin() {
+      const room = document.getElementById("pl-room").value.trim();
+      const name = document.getElementById("pl-name").value.trim();
+      if (!room || !name) {
+        alert("Nhập đủ mã phòng và tên.");
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${room}/join`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ name }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert("Join error: " + (data.detail || res.statusText));
+          return;
+        }
+        playerState.roomCode = data.room_code;
+        playerState.playerId = data.player_id;
+        playerState.playerName = name;
+
+        document.getElementById("player-join").classList.add("hidden");
+        document.getElementById("player-game").classList.remove("hidden");
+
+        roomInfoEl.textContent = `Room: ${playerState.roomCode} – You: ${playerState.playerName}`;
+        await fetchPlayerState();
+        setInterval(fetchPlayerState, 3000);
+      } catch (e) {
+        console.error(e);
+        alert("Cannot connect to server.");
+      }
+    }
+
+    async function fetchPlayerState() {
+      if (!playerState.roomCode || !playerState.playerId) return;
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${playerState.roomCode}/state/${playerState.playerId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        playerState.role         = data.player.role;
+        playerState.alive        = data.player.alive;
+        playerState.mutedToday   = data.player.muted_today;
+        playerState.phase        = data.phase;
+        playerState.nightNumber  = data.night_number;
+        playerState.dayNumber    = data.day_number;
+        playerState.deathsLastNight = data.deaths_last_night;
+        playerState.players      = data.players;
+        playerState.activeCall   = data.active_call;
+        playerState.wolfMates    = data.wolf_mates || [];
+        playerState.winner       = data.winner || null;
+
+        renderPlayerUI();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderPlayerUI() {
+      const roleLabel = roleToLabel(playerState.role);
+      const phaseLabel =
+        playerState.phase === "night" ? `🌙 NIGHT ${playerState.nightNumber}` :
+        playerState.phase === "day"   ? `☀ DAY ${playerState.dayNumber}` :
+        playerState.phase === "ended" ? `🏁 GAME ENDED` :
+        "🏠 Waiting for host";
+
+      const alivePill = `<span class="pill ${playerState.alive ? "green" : "red"}">
+        ${playerState.alive ? "🟢 Alive" : "☠ Dead"}
+      </span>`;
+      const phasePill = `<span class="pill blue">${phaseLabel}</span>`;
+
+      let wolfMateLine = "";
+      if (playerState.role === "werewolf" && playerState.wolfMates.length > 0) {
+        wolfMateLine = `<div class="small">Your fellow wolves: <b>${playerState.wolfMates.join(", ")}</b></div>`;
+      }
+
+      const winnerText =
+        playerState.winner === "werewolves" ? "<br/><b>Game over: Werewolves win.</b>" :
+        playerState.winner === "village"    ? "<br/><b>Game over: Village wins.</b>" : "";
+
+      plTopInfoEl.innerHTML = `
+        <h2>${playerState.playerName || "You"}</h2>
+        <div class="small">Role: <b>${roleLabel}</b>${winnerText}</div>
+        ${wolfMateLine}
+        <div>${alivePill}${phasePill}</div>
+      `;
+
+      if (playerState.winner) {
+        plSystemMsgEl.style.display = "block";
+        plSystemMsgEl.textContent =
+          playerState.winner === "werewolves"
+            ? "Game over: Werewolves win. No more actions."
+            : "Game over: Village wins. No more actions.";
+        plActionArea.innerHTML = "";
+      } else if (playerState.mutedToday && playerState.phase === "day") {
+        plSystemMsgEl.style.display = "block";
+        plSystemMsgEl.textContent =
+          "⚠ You have been silenced by the Mage for today.\nPlease do not talk according to table rules.";
+      } else {
+        plSystemMsgEl.style.display = "none";
+      }
+
+      if (!playerState.winner && playerState.phase === "day" && playerState.deathsLastNight && playerState.deathsLastNight.length > 0) {
+        plNightSummaryEl.textContent = `Last night deaths: ${playerState.deathsLastNight.join(", ")}.`;
+      } else if (!playerState.winner && playerState.phase === "day") {
+        plNightSummaryEl.textContent = "No one died last night (or host has not resolved).";
+      } else {
+        plNightSummaryEl.textContent = "";
+      }
+
+      plPlayerListEl.innerHTML = "";
+      playerState.players.forEach(p => {
+        const statusClass = p.alive ? "player-status-alive" : "player-status-dead";
+        const muted = p.muted_today ? `<span class="player-status-muted">• muted</span>` : "";
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span>${p.name}</span>
+          <span class="${statusClass}">${p.alive ? "alive" : "dead"}</span>
+          ${muted}
+        `;
+        plPlayerListEl.appendChild(li);
+      });
+
+      if (playerState.winner) {
+        plActionArea.innerHTML = `<p class="small">Game over. Please wait for host if you start a new game.</p>`;
+        return;
+      }
+
+      renderPlayerAction();
+    }
+
+    function renderPlayerAction() {
+      if (!playerState.alive) {
+        plActionArea.innerHTML = `<p class="small">You are dead. No more actions.</p>`;
+        nightUIState.built = false;
+        nightUIState.nightNumber = null;
+        dayUIState.built = false;
+        dayUIState.dayNumber = null;
+        dayUIState.votedTarget = null;
+        return;
+      }
+
+      if (playerState.phase === "night") {
+        if (nightUIState.nightNumber !== playerState.nightNumber) {
+          nightUIState.built = false;
+          nightUIState.nightNumber = null;
+        }
+        renderNightActionPlayer();
+      } else if (playerState.phase === "day") {
+        if (dayUIState.dayNumber !== playerState.dayNumber) {
+          dayUIState.built = false;
+          dayUIState.dayNumber = null;
+          dayUIState.votedTarget = null;
+        }
+        nightUIState.built = false;
+        nightUIState.nightNumber = null;
+        renderDayActionPlayer();
+      } else {
+        nightUIState.built = false;
+        nightUIState.nightNumber = null;
+        dayUIState.built = false;
+        dayUIState.dayNumber = null;
+        dayUIState.votedTarget = null;
+        plActionArea.innerHTML = `<p class="small">Game has not started yet. Wait for host.</p>`;
+      }
+    }
+
+    function createTargetSelectPlayer(placeholder, includeSelf) {
+      const sel = document.createElement("select");
+      const opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = placeholder;
+      sel.appendChild(opt0);
+
+      playerState.players.forEach(p => {
+        if (!includeSelf && p.name === playerState.playerName) return;
+        if (!p.alive) return;
+        const o = document.createElement("option");
+        o.value = p.name;
+        o.textContent = p.name;
+        sel.appendChild(o);
+      });
+      return sel;
+    }
+
+    async function sendPlayerAction(action_type, target_name) {
+      if (!playerState.roomCode || !playerState.playerId) {
+        alert("Missing room or playerId.");
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${playerState.roomCode}/actions`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            player_id: playerState.playerId,
+            action_type,
+            target_name,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          alert("Action error: " + (data.detail || res.statusText));
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+        alert("Network error when sending action.");
+      }
+    }
+
+    function renderNightActionPlayer() {
+      const role = playerState.role;
+      if (!role) {
+        plActionArea.innerHTML = `<p class="small">Host has not started the game yet.</p>`;
+        return;
+      }
+
+      if (nightUIState.built && nightUIState.nightNumber === playerState.nightNumber) {
+        return;
+      }
+
+      if (!playerState.activeCall || playerState.activeCall !== role) {
+        plActionArea.innerHTML = `<p class="small">Host has not called your role yet. Keep your eyes closed.</p>`;
+        return;
+      }
+
+      nightUIState.built = true;
+      nightUIState.nightNumber = playerState.nightNumber;
+      plActionArea.innerHTML = "";
+
+      if (role === "mage") {
+        const p = document.createElement("p");
+        p.className = "small";
+        p.textContent = "You are the Mage. Choose someone to silence for tomorrow.";
+        plActionArea.appendChild(p);
+
+        const sel = createTargetSelectPlayer("Choose someone to silence", true);
+        plActionArea.appendChild(sel);
+
+        const btn = document.createElement("button");
+        btn.textContent = "Confirm silence";
+        btn.onclick = async () => {
+          const t = sel.value;
+          if (!t) { alert("Choose someone."); return; }
+          await sendPlayerAction("mage_mute", t);
+          plActionArea.innerHTML = `<p class="small">You chose to silence: <b>${t}</b>.</p>`;
+        };
+        plActionArea.appendChild(btn);
+        return;
+      }
+
+      if (role === "guard") {
+        const p = document.createElement("p");
+        p.className = "small";
+        p.textContent = "You are the Guard. Choose someone to protect.";
+        plActionArea.appendChild(p);
+
+        const sel = createTargetSelectPlayer("Choose someone to protect", true);
+        plActionArea.appendChild(sel);
+
+        const btn = document.createElement("button");
+        btn.textContent = "Send protection";
+        btn.onclick = async () => {
+          const t = sel.value;
+          if (!t) { alert("Choose someone."); return; }
+          await sendPlayerAction("guard_protect", t);
+          plActionArea.innerHTML = `<p class="small">You chose to protect: <b>${t}</b>.</p>`;
+        };
+        plActionArea.appendChild(btn);
+        return;
+      }
+
+      if (role === "werewolf") {
+        const p = document.createElement("p");
+        p.className = "small";
+        p.textContent = "You are a Werewolf. Choose a victim.";
+        plActionArea.appendChild(p);
+
+        const sel = createTargetSelectPlayer("Choose a victim", false);
+        plActionArea.appendChild(sel);
+
+        const btn = document.createElement("button");
+        btn.textContent = "Send wolf choice";
+        btn.onclick = async () => {
+          const t = sel.value;
+          if (!t) { alert("Choose a victim."); return; }
+          await sendPlayerAction("wolf_kill", t);
+          plActionArea.innerHTML = `<p class="small">You selected victim: <b>${t}</b>.</p>`;
+        };
+        plActionArea.appendChild(btn);
+        return;
+      }
+
+      if (role === "gambler") {
+        const p = document.createElement("p");
+        p.className = "small";
+        if (playerState.nightNumber < 2) {
+          p.textContent = "You are the Gambler. You can only bet from Night 2 onwards.";
+          plActionArea.appendChild(p);
+          return;
+        }
+        p.textContent = "You are the Gambler. Choose someone to bet on, or do nothing.";
+        plActionArea.appendChild(p);
+
+        const sel = createTargetSelectPlayer("Choose a player to bet on", false);
+        plActionArea.appendChild(sel);
+
+        const btnBet = document.createElement("button");
+        btnBet.textContent = "Send bet choice";
+        btnBet.onclick = async () => {
+          const t = sel.value;
+          if (!t) { alert("Choose someone."); return; }
+          await sendPlayerAction("gambler_bet", t);
+          plActionArea.innerHTML = `<p class="small">You bet on: <b>${t}</b>.</p>`;
+        };
+        plActionArea.appendChild(btnBet);
+
+        const btnSkip = document.createElement("button");
+        btnSkip.textContent = "No bet this night";
+        btnSkip.classList.add("secondary");
+        btnSkip.onclick = async () => {
+          await sendPlayerAction("gambler_skip", null);
+          plActionArea.innerHTML = `<p class="small">You decided not to bet this night.</p>`;
+        };
+        plActionArea.appendChild(btnSkip);
+        return;
+      }
+
+      if (role === "seer") {
+        const p = document.createElement("p");
+        p.className = "small";
+        p.textContent = "You are the Seer. Choose someone to inspect. Only you see the result.";
+        plActionArea.appendChild(p);
+
+        const sel = createTargetSelectPlayer("Choose someone to inspect", false);
+        plActionArea.appendChild(sel);
+
+        const btn = document.createElement("button");
+        btn.textContent = "Inspect & get result";
+        btn.onclick = async () => {
+          const t = sel.value;
+          if (!t) { alert("Choose someone."); return; }
+          await sendPlayerAction("seer_inspect", t);
+          try {
+            const res = await fetch(`${API_BASE}/rooms/${playerState.roomCode}/seer_result`, {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({
+                player_id: playerState.playerId,
+                action_type: "seer_inspect",
+                target_name: t,
+              }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+              alert("seer_result error: " + (data.detail || res.statusText));
+              return;
+            }
+            plActionArea.innerHTML =
+              `<p class="small">Result: <b>${data.target_name}</b> ` +
+              `${data.is_werewolf ? "IS a Werewolf" : "is NOT a Werewolf"}.</p>`;
+          } catch (e) {
+            console.error(e);
+          }
+        };
+        plActionArea.appendChild(btn);
+        return;
+      }
+
+      if (role === "witch") {
+        const p = document.createElement("p");
+        p.className = "small";
+        p.textContent =
+          "You are the Witch. You must decide: heal or not heal, and poison or not poison. You have one heal and one poison for the whole game.";
+        plActionArea.appendChild(p);
+
+        (async () => {
+          try {
+            const res = await fetch(`${API_BASE}/rooms/${playerState.roomCode}/witch_info/${playerState.playerId}`);
+            const info = await res.json();
+            if (!res.ok) {
+              plActionArea.innerHTML += `<p class="small">Cannot get victim info.</p>`;
+              return;
+            }
+
+            const victimLine = info.victim_name
+              ? `Tonight the werewolves attacked: <b>${info.victim_name}</b>.`
+              : `No confirmed wolf victim yet.`;
+
+            const victimP = document.createElement("p");
+            victimP.className = "small";
+            victimP.innerHTML = victimLine;
+            plActionArea.appendChild(victimP);
+
+            // HEAL DECISION
+            const healWrapper = document.createElement("div");
+            healWrapper.className = "small";
+            healWrapper.innerHTML = "<b>Heal decision:</b>";
+            plActionArea.appendChild(healWrapper);
+
+            let healYesBtn = null;
+
+            if (info.can_heal && info.victim_name) {
+              healYesBtn = document.createElement("button");
+              healYesBtn.textContent = `Heal victim (${info.victim_name})`;
+              healYesBtn.onclick = async () => {
+                await sendPlayerAction("witch_heal", info.victim_name);
+                healYesBtn.disabled = true;
+                healNoBtn.disabled = true;
+                healWrapper.innerHTML += `<br/>You decided to HEAL <b>${info.victim_name}</b>.`;
+              };
+              plActionArea.appendChild(healYesBtn);
+            }
+
+            const healNoBtn = document.createElement("button");
+            healNoBtn.textContent = "Do NOT heal";
+            healNoBtn.classList.add("secondary");
+            healNoBtn.onclick = async () => {
+              await sendPlayerAction("witch_no_heal", null);
+              healNoBtn.disabled = true;
+              if (healYesBtn) healYesBtn.disabled = true;
+              healWrapper.innerHTML += "<br/>You decided NOT to heal.";
+            };
+            plActionArea.appendChild(healNoBtn);
+
+            // POISON DECISION
+            const poisonWrapper = document.createElement("div");
+            poisonWrapper.className = "small";
+            poisonWrapper.style.marginTop = "8px";
+            poisonWrapper.innerHTML = "<b>Poison decision:</b>";
+            plActionArea.appendChild(poisonWrapper);
+
+            if (info.can_poison) {
+              const sel = createTargetSelectPlayer("Choose a player to poison", false);
+              plActionArea.appendChild(sel);
+
+              const poisonBtn = document.createElement("button");
+              poisonBtn.textContent = "Use poison";
+              poisonBtn.onclick = async () => {
+                const t = sel.value;
+                if (!t) { alert("Choose someone."); return; }
+                await sendPlayerAction("witch_poison", t);
+                poisonBtn.disabled = true;
+                poisonNoBtn.disabled = true;
+                sel.disabled = true;
+                poisonWrapper.innerHTML += `<br/>You poisoned <b>${t}</b>.`;
+              };
+              plActionArea.appendChild(poisonBtn);
+
+              const poisonNoBtn = document.createElement("button");
+              poisonNoBtn.textContent = "No poison";
+              poisonNoBtn.classList.add("secondary");
+              poisonNoBtn.onclick = async () => {
+                await sendPlayerAction("witch_no_poison", null);
+                poisonNoBtn.disabled = true;
+                poisonBtn.disabled = true;
+                sel.disabled = true;
+                poisonWrapper.innerHTML += "<br/>You decided NOT to use poison.";
+              };
+              plActionArea.appendChild(poisonNoBtn);
+            } else {
+              poisonWrapper.innerHTML += "<br/>You have no poison left.";
+            }
+
+          } catch (e) {
+            console.error(e);
+          }
+        })();
+
+        return;
+      }
+
+      const p2 = document.createElement("p");
+      p2.className = "small";
+      p2.textContent = "You have no night action. Keep your eyes closed.";
+      plActionArea.appendChild(p2);
+    }
+
+    function renderDayActionPlayer() {
+      if (dayUIState.built && dayUIState.dayNumber === playerState.dayNumber) {
+        return;
+      }
+      dayUIState.built = true;
+      dayUIState.dayNumber = playerState.dayNumber;
+      plActionArea.innerHTML = "";
+
+      const p = document.createElement("p");
+      p.className = "small";
+      if (dayUIState.votedTarget) {
+        p.innerHTML = `You already voted to lynch: <b>${dayUIState.votedTarget}</b>.`;
+        plActionArea.appendChild(p);
+        return;
+      }
+      p.textContent = "During the day, you can vote to lynch someone (host will tell you when).";
+      plActionArea.appendChild(p);
+
+      const sel = document.createElement("select");
+      const opt0 = document.createElement("option");
+      opt0.value = "";
+      opt0.textContent = "Choose a player to vote";
+      sel.appendChild(opt0);
+
+      playerState.players
+        .filter(x => x.alive && x.name !== playerState.playerName)
+        .forEach(pl => {
+          const o = document.createElement("option");
+          o.value = pl.name;
+          o.textContent = pl.name;
+          sel.appendChild(o);
+        });
+      plActionArea.appendChild(sel);
+
+      const btn = document.createElement("button");
+      btn.textContent = "Send lynch vote";
+      btn.onclick = async () => {
+        const t = sel.value;
+        if (!t) { alert("Choose someone."); return; }
+        await sendPlayerAction("vote_lynch", t);
+        dayUIState.votedTarget = t;
+        plActionArea.innerHTML = `<p class="small">You voted to lynch: <b>${t}</b>.</p>`;
+      };
+      plActionArea.appendChild(btn);
+    }
+
+    // ==== VILLAGE SCREEN ====
+    const villageInfoEl   = document.getElementById("village-info");
+    const villagePhaseEl  = document.getElementById("village-phase");
+    const villageListEl   = document.getElementById("village-player-list");
+    let villageRoomCode   = null;
+    let villageTimer      = null;
+
+    async function villageConnect() {
+      const room = document.getElementById("village-room").value.trim();
+      if (!room) {
+        alert("Nhập mã phòng.");
+        return;
+      }
+      villageRoomCode = room;
+      villageInfoEl.textContent = `Room: ${room}`;
+      if (villageTimer) clearInterval(villageTimer);
+      await fetchVillageState();
+      villageTimer = setInterval(fetchVillageState, 3000);
+    }
+
+    async function fetchVillageState() {
+      if (!villageRoomCode) return;
+      try {
+        const res = await fetch(`${API_BASE}/rooms/${villageRoomCode}/village_state`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const phaseLabel =
+          data.phase === "night" ? `🌙 NIGHT ${data.night_number}` :
+          data.phase === "day"   ? `☀ DAY ${data.day_number}` :
+          data.phase === "ended" ? `🏁 GAME ENDED` :
+          "🏠 LOBBY";
+
+        const winnerText =
+          data.winner === "werewolves" ? "<br/><b>Werewolves win the game.</b>" :
+          data.winner === "village"    ? "<br/><b>Village wins the game.</b>" : "";
+
+        villagePhaseEl.innerHTML = `<span class="pill blue">${phaseLabel}</span>${winnerText}`;
+
+        villageListEl.innerHTML = "";
+        data.players.forEach(p => {
+          const statusClass = p.alive ? "player-status-alive" : "player-status-dead";
+          const muted = p.muted_today ? `<span class="player-status-muted">• muted</span>` : "";
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <span>${p.name}</span>
+            <span class="${statusClass}">${p.alive ? "alive" : "dead"}</span>
+            ${muted}
+          `;
+          villageListEl.appendChild(li);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function roleToLabel(role) {
+      switch (role) {
+        case "seer":     return "🔮 Seer";
+        case "witch":    return "🧪 Witch";
+        case "guard":    return "🛡️ Guard";
+        case "werewolf": return "🐺 Werewolf";
+        case "gambler":  return "🎲 Gambler";
+        case "prince":   return "👑 Prince";
+        case "mage":     return "🧙 Mage";
+        case "villager": return "👤 Villager";
+        case null:
+        case undefined:
+        default:         return "⏳ No role yet";
+      }
+    }
+
+    // Host auto refresh
+    setInterval(() => {
+      if (!hostScreen.classList.contains("hidden")) {
+        hostRefresh();
+      }
+    }, 5000);
+  </script>
+</body>
+</html>
